@@ -32,26 +32,16 @@
 #define SCREEN_WIDTH 9
 #define SCREEN_HEIGHT 13
 
-#define BLACK  0x000000
-#define WHITE  0xFFFFFF
-#define RED    0xFF0404
-#define GREEN  0x04FF04
-#define BLUE   0x0404FF
-#define CYAN   0x04FFFF
-#define ORANGE 0xFF2804
-#define YELLOW 0xFFFF04
-#define PURPLE 0xFF04FF
-
 typedef enum Color{
-    black,
-    white,
-    red,
-    green,
-    blue,
-    cyan,
-    orange,
-    yellow,
-    purple
+    black  = 0b00000000,
+    white  = 0b11111111,
+    red    = 0b11100000,
+    green  = 0b00011100,
+    blue   = 0b00000011,
+    cyan   = 0b00011111,
+    orange = 0b11110000,
+    yellow = 0b11111100,
+    purple = 0b11100011
 } Color;
 
 // Write a single byte to a register
@@ -64,9 +54,6 @@ bool IS31FL3741_selectPage(uint8_t page);
 void IS31FL3741_init(void);
 
 // Writes with a color in 0xRRGGBB format.
-bool writePixel(uint8_t y, uint8_t x, uint32_t color);
-
-// Converts a color to its hex value
-uint32_t hex(Color color);
+bool writePixel(uint8_t y, uint8_t x, Color color);
 
 #endif

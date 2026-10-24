@@ -74,21 +74,24 @@ void IS31FL3741_init(void){
 }
 
 // Writes with a color in 0xRRGGBB format.
-bool writePixel(uint8_t y, uint8_t x, uint32_t color){
+bool writePixel(uint8_t y, uint8_t x, Color color){
     uint8_t txBuffer[4];
     txBuffer[0] = ADDRESS_TABLE[y][x] * 3;
     // Fill the buffer with each bit
+    uint8_t R = color & red;
+    uint8_t G = (color & green) << 3;
+    uint8_t B = (color & blue) << 6;
+
     if (y % 2 == 0 && y >= 2){
-        // Pixel is RGB
-        for (int i = 1; i < 4; i++){
-            txBuffer[i] = (uint8_t)((color >> ((i-1)*8)) & 0xFF);
-        }
+        // Pixel is BGR
+        txBuffer[1] = B;
+        txBuffer[2] = G;
+        txBuffer[3] = R;
     } else {
-        // Pixel is BRG
-        txBuffer[1] = (uint8_t)((color >> ((1)*8)) & 0xFF);
-        txBuffer[2] = (uint8_t)((color >> ((2)*8)) & 0xFF);
-        txBuffer[3] = (uint8_t)((color >> ((0)*8)) & 0xFF);
-        
+        // Pixel is GRB
+        txBuffer[1] = G;
+        txBuffer[2] = R;
+        txBuffer[3] = B;
     }
 
     // Selects based on the position of the pixel. These numbers are based on the hardware locations of pixels.
@@ -111,27 +114,4 @@ bool writePixel(uint8_t y, uint8_t x, uint32_t color){
         return false;
     }
     return true;
-}
-
-uint32_t hex(Color color){
-    switch (color) {
-        case black:
-            return BLACK;
-        case white:
-            return WHITE;
-        case red:
-            return RED;
-        case green:
-            return GREEN;
-        case blue:
-            return BLUE;
-        case cyan:
-            return CYAN;
-        case orange:
-            return ORANGE;
-        case yellow:
-            return YELLOW;
-        case purple:
-            return PURPLE;
-    }
 }

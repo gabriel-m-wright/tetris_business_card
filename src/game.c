@@ -245,13 +245,13 @@ void drawMino(uint8_t y, uint8_t x, Mino mino, Orientation orientation, bool cle
             break;
     }
     Color color;
-    if (clear) color = BLACK;
+    if (clear) color = black;
     else color = mino.color;
 
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
             if (toDraw[j][i] == 1) {
-                writePixel(y + j, x + i, hex(color));
+                writePixel(y + j, x + i, color);
             }
         }
     }
@@ -374,7 +374,7 @@ bool canBePlaced(uint8_t y, uint8_t x, Mino mino, Orientation orientation){
 void restartGame(){
     for (int j = SCREEN_HEIGHT - 1; j >= 0; j--){
         for (int i = 0; i < SCREEN_WIDTH; i++){
-            writePixel(j, i, WHITE);
+            writePixel(j, i, white);
             delay_cycles(400000);
         }
     }
@@ -386,7 +386,7 @@ void restartGame(){
     }
     for (int j = SCREEN_HEIGHT - 1; j >= 0; j--){
         for (int i = 0; i < SCREEN_WIDTH; i++){
-            writePixel(j, i, BLACK);
+            writePixel(j, i, black);
             delay_cycles(400000);
         }
     }
@@ -464,7 +464,7 @@ void clearRows(){
             clearCount++;
             // TODO: If this is above the screen this will break. FIX!
             for (int j = 0; j < SCREEN_WIDTH; j++) {
-                writePixel(yScreenPos(i + currentMinoY), j, hex(white));
+                writePixel(yScreenPos(i + currentMinoY), j, white);
             }
         } else full = true;
     }
@@ -492,7 +492,7 @@ void clearRows(){
 void reWriteScreen(){
     for (int i = 0 + BOARD_HEIGHT - BORDER - SCREEN_HEIGHT; i < BOARD_HEIGHT - BORDER; i++){
         for (int j = 0 + BORDER; j < SCREEN_WIDTH + BORDER; j++){
-            writePixel(yScreenPos(i), xScreenPos(j), hex(gameBoard[i][j]));
+            writePixel(yScreenPos(i), xScreenPos(j), gameBoard[i][j]);
         }
     }
 }

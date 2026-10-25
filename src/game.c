@@ -25,52 +25,31 @@ static uint32_t rngState = SEED;
 const Mino minos[7] = {
     {
         .color = CYAN,
-        .rotationNorth = 0b0000111100000000,
-        .rotationEast  = 0b0010001000100010,
-        .rotationSouth = 0b0000000011110000,
-        .rotationWest  = 0b0100010001000100
+        .shape = {0b0000111100000000,0b0010001000100010,0b0000000011110000,0b0100010001000100}
     },
     {
         .color = GREEN,
-        .rotationNorth = 0b0011011000000000,
-        .rotationEast  = 0b0010001100010000,
-        .rotationSouth = 0b0000001101100000,
-        .rotationWest  = 0b0100011000100000
+        .shape = {0b0011011000000000,0b0010001100010000,0b0000001101100000,0b0100011000100000}
     },
     {
         .color = RED,
-        .rotationNorth = 0b0110001100000000,
-        .rotationEast  = 0b0001001100100000,
-        .rotationSouth = 0b0000011000110000,
-        .rotationWest  = 0b0010011001000000
+        .shape = {0b0110001100000000,0b0001001100100000,0b0000011000110000,0b0010011001000000}
     },
     {
         .color = YELLOW,
-        .rotationNorth = 0b0110011000000000,
-        .rotationEast  = 0b0110011000000000,
-        .rotationSouth = 0b0110011000000000,
-        .rotationWest  = 0b0110011000000000
+        .shape = {0b0110011000000000,0b0110011000000000,0b0110011000000000,0b0110011000000000}
     },
     {
         .color = PURPLE,
-        .rotationNorth = 0b0010011100000000,
-        .rotationEast  = 0b0010001100100000,
-        .rotationSouth = 0b0000011100100000,
-        .rotationWest  = 0b0010011000100000
+        .shape = {0b0010011100000000,0b0010001100100000,0b0000011100100000,0b0010011000100000}
     },
     {
         .color = ORANGE,
-        .rotationNorth = 0b0001011100000000,
-        .rotationEast  = 0b0010001000110000,
-        .rotationSouth = 0b0000011101000000,
-        .rotationWest  = 0b0110001000100000
+        .shape = {0b0001011100000000,0b0010001000110000,0b0000011101000000,0b0110001000100000}
     },
     {
         .color = BLUE,
-        .rotationNorth = 0b0100011100000000,
-        .rotationEast  = 0b0011001000100000,
-        .rotationSouth = 0b0000011100010000,
-        .rotationWest  = 0b0010001001100000
+        .shape = {0b0100011100000000,0b0011001000100000,0b0000011100010000,0b0010001001100000}
     }
 };
 void gameTick(void){
@@ -88,7 +67,7 @@ void gameTick(void){
 
 // TODO: Potential bug when mino off screen. Only draw parts of mino on screen.
 void drawMino(uint8_t y, uint8_t x, Mino mino, Orientation orientation, bool clear){
-    uint16_t toDraw = getOrientation();
+    uint16_t toDraw = activeMino.mino->shape[orientation];
     uint8_t color;
     if (clear) color = BLACK;
     else color = mino.color;
@@ -163,7 +142,7 @@ bool onScreen(uint8_t x, uint8_t y){
 }
 
 bool canBePlaced(uint8_t y, uint8_t x, Mino mino, Orientation orientation){
-    uint16_t toDraw = getOrientation();
+    uint16_t toDraw = activeMino.mino->shape[orientation];
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
             if ((toDraw >> (15 - (j * 4 + i)) & 1) & (!inBounds(x + i, y + j) | (gameBoard[y+j][x+i] != 0))) return false;
@@ -206,7 +185,7 @@ bool lowerMino(){
 }
 
 void setMino(){
-    uint16_t toDraw = getOrientation();
+    uint16_t toDraw = activeMino.mino->shape[activeMino.orientation];
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
             if (toDraw >> (15 - (j * 4 + i)) & 1) {
@@ -280,22 +259,5 @@ void reWriteScreen(){
         for (int j = 0 + BORDER; j < SCREEN_WIDTH + BORDER; j++){
             writePixel(yScreenPos(i), xScreenPos(j), gameBoard[i][j]);
         }
-    }
-}
-
-uint16_t getOrientation(void) {
-    switch (activeMino.orientation) {
-        case NORTH:
-            return activeMino.mino->rotationNorth;
-            break;
-        case EAST:
-            return activeMino.mino->rotationEast;
-            break;
-        case SOUTH:
-            return activeMino.mino->rotationSouth;
-            break;
-        case WEST:
-            return activeMino.mino->rotationWest;
-            break;
     }
 }

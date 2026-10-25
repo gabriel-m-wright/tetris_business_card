@@ -40,10 +40,7 @@ This mino would become 0b01100011001000000, with each 1 corresponding to the pre
 
 typedef struct Mino{
     uint8_t color;
-    uint16_t rotationNorth;
-    uint16_t rotationEast;
-    uint16_t rotationSouth;
-    uint16_t rotationWest;
+    uint16_t shape[4];
 } Mino;
 
 typedef struct ActiveMino{
@@ -111,7 +108,5 @@ void rotateMino(void);
 
 void reWriteScreen(void);
 
-// Returns the current orientation.
-uint16_t getOrientation();
 
 #endif

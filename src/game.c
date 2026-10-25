@@ -20,198 +20,58 @@ static uint32_t rngState = SEED;
 
 const Mino i_block = {
     .color = CYAN,
-    .rotationNorth = {
-        {0,0,0,0},
-        {1,1,1,1},
-        {0,0,0,0},
-        {0,0,0,0}
-    },
-    .rotationEast = {
-        {0,0,1,0},
-        {0,0,1,0},
-        {0,0,1,0},
-        {0,0,1,0}
-    },
-    .rotationSouth = {
-        {0,0,0,0},
-        {0,0,0,0},
-        {1,1,1,1},
-        {0,0,0,0}
-    },
-    .rotationWest = {
-        {0,1,0,0},
-        {0,1,0,0},
-        {0,1,0,0},
-        {0,1,0,0}
-    },
+    .rotationNorth = 0b0000111100000000,
+    .rotationEast  = 0b0010001000100010,
+    .rotationSouth = 0b0000000011110000,
+    .rotationWest  = 0b0100010001000100
 };
 
 const Mino s_block = {
     .color = GREEN,
-    .rotationNorth = {
-        {0,0,1,1},
-        {0,1,1,0},
-        {0,0,0,0},
-        {0,0,0,0}
-    },
-    .rotationEast = {
-        {0,0,1,0},
-        {0,0,1,1},
-        {0,0,0,1},
-        {0,0,0,0}
-    },
-    .rotationSouth = {
-        {0,0,0,0},
-        {0,0,1,1},
-        {0,1,1,0},
-        {0,0,0,0}
-    },
-    .rotationWest = {
-        {0,1,0,0},
-        {0,1,1,0},
-        {0,0,1,0},
-        {0,0,0,0}
-    },
+    .rotationNorth = 0b0011011000000000,
+    .rotationEast  = 0b0010001100010000,
+    .rotationSouth = 0b0000001101100000,
+    .rotationWest  = 0b0100011000100000
 };
 
 const Mino z_block = {
     .color = RED,
-    .rotationNorth = {
-        {0,1,1,0},
-        {0,0,1,1},
-        {0,0,0,0},
-        {0,0,0,0}
-    },
-    .rotationEast = {
-        {0,0,0,1},
-        {0,0,1,1},
-        {0,0,1,0},
-        {0,0,0,0}
-    },
-    .rotationSouth = {
-        {0,0,0,0},
-        {0,1,1,0},
-        {0,0,1,1},
-        {0,0,0,0}
-    },
-    .rotationWest = {
-        {0,0,1,0},
-        {0,1,1,0},
-        {0,1,0,0},
-        {0,0,0,0}
-    },
+    .rotationNorth = 0b0110001100000000,
+    .rotationEast  = 0b0001001100100000,
+    .rotationSouth = 0b0000011000110000,
+    .rotationWest  = 0b0010011001000000
 };
 
 const Mino o_block = {
     .color = YELLOW,
-    .rotationNorth = {
-        {0,1,1,0},
-        {0,1,1,0},
-        {0,0,0,0},
-        {0,0,0,0}
-    },
-    .rotationEast = {
-        {0,1,1,0},
-        {0,1,1,0},
-        {0,0,0,0},
-        {0,0,0,0}
-    },
-    .rotationSouth = {
-        {0,1,1,0},
-        {0,1,1,0},
-        {0,0,0,0},
-        {0,0,0,0}
-    },
-    .rotationWest = {
-        {0,1,1,0},
-        {0,1,1,0},
-        {0,0,0,0},
-        {0,0,0,0}
-    },
+    .rotationNorth = 0b0110011000000000,
+    .rotationEast  = 0b0110011000000000,
+    .rotationSouth = 0b0110011000000000,
+    .rotationWest  = 0b0110011000000000
 };
 
 const Mino t_block = {
     .color = PURPLE,
-    .rotationNorth = {
-        {0,0,1,0},
-        {0,1,1,1},
-        {0,0,0,0},
-        {0,0,0,0}
-    },
-    .rotationEast = {
-        {0,0,1,0},
-        {0,0,1,1},
-        {0,0,1,0},
-        {0,0,0,0}
-    },
-    .rotationSouth = {
-        {0,0,0,0},
-        {0,1,1,1},
-        {0,0,1,0},
-        {0,0,0,0}
-    },
-    .rotationWest = {
-        {0,0,1,0},
-        {0,1,1,0},
-        {0,0,1,0},
-        {0,0,0,0}
-    },
+    .rotationNorth = 0b0010011100000000,
+    .rotationEast  = 0b0010001100100000,
+    .rotationSouth = 0b0000011100100000,
+    .rotationWest  = 0b0010011000100000
 };
 
 const Mino l_block = {
     .color = ORANGE,
-    .rotationNorth = {
-        {0,0,0,1},
-        {0,1,1,1},
-        {0,0,0,0},
-        {0,0,0,0}
-    },
-    .rotationEast = {
-        {0,0,1,0},
-        {0,0,1,0},
-        {0,0,1,1},
-        {0,0,0,0}
-    },
-    .rotationSouth = {
-        {0,0,0,0},
-        {0,1,1,1},
-        {0,1,0,0},
-        {0,0,0,0}
-    },
-    .rotationWest = {
-        {0,1,1,0},
-        {0,0,1,0},
-        {0,0,1,0},
-        {0,0,0,0}
-    },
+    .rotationNorth = 0b0001011100000000,
+    .rotationEast  = 0b0010001000110000,
+    .rotationSouth = 0b0000011101000000,
+    .rotationWest  = 0b0110001000100000
 };
 
 const Mino j_block = {
     .color = BLUE,
-    .rotationNorth = {
-        {0,1,0,0},
-        {0,1,1,1},
-        {0,0,0,0},
-        {0,0,0,0}
-    },
-    .rotationEast = {
-        {0,0,1,1},
-        {0,0,1,0},
-        {0,0,1,0},
-        {0,0,0,0}
-    },
-    .rotationSouth = {
-        {0,0,0,0},
-        {0,1,1,1},
-        {0,0,0,1},
-        {0,0,0,0}
-    },
-    .rotationWest = {
-        {0,0,1,0},
-        {0,0,1,0},
-        {0,1,1,0},
-        {0,0,0,0}
-    },
+    .rotationNorth = 0b0100011100000000,
+    .rotationEast  = 0b0011001000100000,
+    .rotationSouth = 0b0000011100010000,
+    .rotationWest  = 0b0010001001100000
 };
 
 void gameTick(void){
@@ -229,7 +89,7 @@ void gameTick(void){
 
 // TODO: Potential bug when mino off screen. Only draw parts of mino on screen.
 void drawMino(uint8_t y, uint8_t x, Mino mino, Orientation orientation, bool clear){
-    bool (*toDraw)[4];
+    uint16_t toDraw;
     switch (orientation) {
         case NORTH:
             toDraw = mino.rotationNorth;
@@ -250,7 +110,7 @@ void drawMino(uint8_t y, uint8_t x, Mino mino, Orientation orientation, bool cle
 
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
-            if (toDraw[j][i] == 1) {
+            if (toDraw >> (15 - (j * 4 + i)) & 1) {
                 writePixel(y + j, x + i, color);
             }
         }
@@ -348,7 +208,7 @@ bool onScreen(uint8_t x, uint8_t y){
 }
 
 bool canBePlaced(uint8_t y, uint8_t x, Mino mino, Orientation orientation){
-    bool (*toDraw)[4];
+    uint16_t toDraw;
     switch (orientation) {
         case NORTH:
             toDraw = mino.rotationNorth;
@@ -365,7 +225,7 @@ bool canBePlaced(uint8_t y, uint8_t x, Mino mino, Orientation orientation){
     }
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
-            if ((toDraw[j][i] == 1) & (!inBounds(x + i, y + j) | (gameBoard[y+j][x+i] != 0))) return false;
+            if ((toDraw >> (15 - (j * 4 + i)) & 1) & (!inBounds(x + i, y + j) | (gameBoard[y+j][x+i] != 0))) return false;
         }
     }
     return true;
@@ -406,7 +266,7 @@ bool lowerMino(){
 
 void setMino(){
     Mino mino = minoType();
-    bool (*toDraw)[4];
+    uint16_t toDraw;
     switch (currentOrientation) {
         case NORTH:
             toDraw = mino.rotationNorth;
@@ -424,7 +284,7 @@ void setMino(){
 
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
-            if (toDraw[j][i] == 1) {
+            if (toDraw >> (15 - (j * 4 + i)) & 1) {
                 gameBoard[j + currentMinoY][i + currentMinoX] = mino.color;
             }
         }

@@ -40,12 +40,21 @@ typedef enum Orientation{
     WEST
 } Orientation;
 
+/*
+Each mino is enclosed in a 4x4 square. Each rotation is encoded as follows:
+.X..
+.XX.
+.X..
+....
+This mino would become 0b01100011001000000, with each 1 corresponding to the presence of a square. This fits neatly in 16 bits.
+*/
+
 typedef struct Mino{
     uint8_t color;
-    bool rotationNorth[4][4];
-    bool rotationEast[4][4];
-    bool rotationSouth[4][4];
-    bool rotationWest[4][4];
+    uint16_t rotationNorth;
+    uint16_t rotationEast;
+    uint16_t rotationSouth;
+    uint16_t rotationWest;
 } Mino;
 
 extern const Mino i_block;

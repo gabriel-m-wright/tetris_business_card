@@ -88,21 +88,7 @@ void gameTick(void){
 
 // TODO: Potential bug when mino off screen. Only draw parts of mino on screen.
 void drawMino(uint8_t y, uint8_t x, Mino mino, Orientation orientation, bool clear){
-    uint16_t toDraw;
-    switch (orientation) {
-        case NORTH:
-            toDraw = mino.rotationNorth;
-            break;
-        case EAST:
-            toDraw = mino.rotationEast;
-            break;
-        case SOUTH:
-            toDraw = mino.rotationSouth;
-            break;
-        case WEST:
-            toDraw = mino.rotationWest;
-            break;
-    }
+    uint16_t toDraw = getOrientation();
     uint8_t color;
     if (clear) color = BLACK;
     else color = mino.color;
@@ -177,21 +163,7 @@ bool onScreen(uint8_t x, uint8_t y){
 }
 
 bool canBePlaced(uint8_t y, uint8_t x, Mino mino, Orientation orientation){
-    uint16_t toDraw;
-    switch (orientation) {
-        case NORTH:
-            toDraw = mino.rotationNorth;
-            break;
-        case EAST:
-            toDraw = mino.rotationEast;
-            break;
-        case SOUTH:
-            toDraw = mino.rotationSouth;
-            break;
-        case WEST:
-            toDraw = mino.rotationWest;
-            break;
-    }
+    uint16_t toDraw = getOrientation();
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
             if ((toDraw >> (15 - (j * 4 + i)) & 1) & (!inBounds(x + i, y + j) | (gameBoard[y+j][x+i] != 0))) return false;
@@ -234,22 +206,7 @@ bool lowerMino(){
 }
 
 void setMino(){
-    uint16_t toDraw;
-    switch (activeMino.orientation) {
-        case NORTH:
-            toDraw = activeMino.mino->rotationNorth;
-            break;
-        case EAST:
-            toDraw = activeMino.mino->rotationEast;
-            break;
-        case SOUTH:
-            toDraw = activeMino.mino->rotationSouth;
-            break;
-        case WEST:
-            toDraw = activeMino.mino->rotationWest;
-            break;
-    }
-
+    uint16_t toDraw = getOrientation();
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
             if (toDraw >> (15 - (j * 4 + i)) & 1) {
@@ -323,5 +280,22 @@ void reWriteScreen(){
         for (int j = 0 + BORDER; j < SCREEN_WIDTH + BORDER; j++){
             writePixel(yScreenPos(i), xScreenPos(j), gameBoard[i][j]);
         }
+    }
+}
+
+uint16_t getOrientation(void) {
+    switch (activeMino.orientation) {
+        case NORTH:
+            return activeMino.mino->rotationNorth;
+            break;
+        case EAST:
+            return activeMino.mino->rotationEast;
+            break;
+        case SOUTH:
+            return activeMino.mino->rotationSouth;
+            break;
+        case WEST:
+            return activeMino.mino->rotationWest;
+            break;
     }
 }

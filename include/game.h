@@ -111,4 +111,7 @@ void rotateMino(void);
 
 void reWriteScreen(void);
 
+// Returns the current orientation.
+uint16_t getOrientation();
+
 #endif

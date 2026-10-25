@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "game.h"
 #include "IS31FL3741.h"
 #include "ti_msp_dl_config.h"
@@ -5,77 +6,75 @@
 
 // There will be a 2 unit buffer around every playable edge of the board.
 static uint8_t gameBoard[BOARD_HEIGHT][SCREEN_WIDTH + 4];
-static ActiveMino currentMino = NONE;
-static Orientation currentOrientation;
-static uint8_t currentMinoX = MINO_SPAWN_POSITION_X;
-static uint8_t currentMinoY = MINO_SPAWN_POSITION_Y;
+
+static ActiveMino activeMino = {
+    .mino = NULL,
+    .orientation = NORTH,
+    .x = MINO_SPAWN_POSITION_X,
+    .y = MINO_SPAWN_POSITION_Y,
+};
 
 static uint32_t lineCount = 0;
 
-// Stores the seven upcoming pieces
+// Stores the seven upcoming pieces as indices in minos[].
 static uint8_t bag[7];
 static uint8_t bagIndex = 7;
 
 static uint32_t rngState = SEED;
 
-const Mino i_block = {
-    .color = CYAN,
-    .rotationNorth = 0b0000111100000000,
-    .rotationEast  = 0b0010001000100010,
-    .rotationSouth = 0b0000000011110000,
-    .rotationWest  = 0b0100010001000100
+const Mino minos[7] = {
+    {
+        .color = CYAN,
+        .rotationNorth = 0b0000111100000000,
+        .rotationEast  = 0b0010001000100010,
+        .rotationSouth = 0b0000000011110000,
+        .rotationWest  = 0b0100010001000100
+    },
+    {
+        .color = GREEN,
+        .rotationNorth = 0b0011011000000000,
+        .rotationEast  = 0b0010001100010000,
+        .rotationSouth = 0b0000001101100000,
+        .rotationWest  = 0b0100011000100000
+    },
+    {
+        .color = RED,
+        .rotationNorth = 0b0110001100000000,
+        .rotationEast  = 0b0001001100100000,
+        .rotationSouth = 0b0000011000110000,
+        .rotationWest  = 0b0010011001000000
+    },
+    {
+        .color = YELLOW,
+        .rotationNorth = 0b0110011000000000,
+        .rotationEast  = 0b0110011000000000,
+        .rotationSouth = 0b0110011000000000,
+        .rotationWest  = 0b0110011000000000
+    },
+    {
+        .color = PURPLE,
+        .rotationNorth = 0b0010011100000000,
+        .rotationEast  = 0b0010001100100000,
+        .rotationSouth = 0b0000011100100000,
+        .rotationWest  = 0b0010011000100000
+    },
+    {
+        .color = ORANGE,
+        .rotationNorth = 0b0001011100000000,
+        .rotationEast  = 0b0010001000110000,
+        .rotationSouth = 0b0000011101000000,
+        .rotationWest  = 0b0110001000100000
+    },
+    {
+        .color = BLUE,
+        .rotationNorth = 0b0100011100000000,
+        .rotationEast  = 0b0011001000100000,
+        .rotationSouth = 0b0000011100010000,
+        .rotationWest  = 0b0010001001100000
+    }
 };
-
-const Mino s_block = {
-    .color = GREEN,
-    .rotationNorth = 0b0011011000000000,
-    .rotationEast  = 0b0010001100010000,
-    .rotationSouth = 0b0000001101100000,
-    .rotationWest  = 0b0100011000100000
-};
-
-const Mino z_block = {
-    .color = RED,
-    .rotationNorth = 0b0110001100000000,
-    .rotationEast  = 0b0001001100100000,
-    .rotationSouth = 0b0000011000110000,
-    .rotationWest  = 0b0010011001000000
-};
-
-const Mino o_block = {
-    .color = YELLOW,
-    .rotationNorth = 0b0110011000000000,
-    .rotationEast  = 0b0110011000000000,
-    .rotationSouth = 0b0110011000000000,
-    .rotationWest  = 0b0110011000000000
-};
-
-const Mino t_block = {
-    .color = PURPLE,
-    .rotationNorth = 0b0010011100000000,
-    .rotationEast  = 0b0010001100100000,
-    .rotationSouth = 0b0000011100100000,
-    .rotationWest  = 0b0010011000100000
-};
-
-const Mino l_block = {
-    .color = ORANGE,
-    .rotationNorth = 0b0001011100000000,
-    .rotationEast  = 0b0010001000110000,
-    .rotationSouth = 0b0000011101000000,
-    .rotationWest  = 0b0110001000100000
-};
-
-const Mino j_block = {
-    .color = BLUE,
-    .rotationNorth = 0b0100011100000000,
-    .rotationEast  = 0b0011001000100000,
-    .rotationSouth = 0b0000011100010000,
-    .rotationWest  = 0b0010001001100000
-};
-
 void gameTick(void){
-    if (currentMino == NONE){
+    if (activeMino.mino == NULL){
         if (!createMino()) restartGame();
         return;
     }
@@ -117,63 +116,33 @@ void drawMino(uint8_t y, uint8_t x, Mino mino, Orientation orientation, bool cle
     }
 }
 
-Mino minoType(){
-    Mino newMino;
-    switch (currentMino) {
-        case NONE:
-        case I_BLOCK:
-            newMino = i_block;
-            break;
-        case S_BLOCK:
-            newMino = s_block;
-            break;
-        case Z_BLOCK:
-            newMino = z_block;
-            break;
-        case O_BLOCK:
-            newMino = o_block;
-            break;
-        case T_BLOCK:
-            newMino = t_block;
-            break;
-        case L_BLOCK:
-            newMino = l_block;
-            break;
-        case J_BLOCK:
-            newMino = j_block;
-            break;
-    }
-    return newMino;
-}
 
 bool createMino(){
-    currentMino = selectNext();
-    currentOrientation = NORTH;
-    currentMinoX = MINO_SPAWN_POSITION_X;
-    currentMinoY = MINO_SPAWN_POSITION_Y;
-    Mino newMino = minoType();
-    
+    activeMino.mino        = selectNext();
+    activeMino.orientation = NORTH;
+    activeMino.x           = MINO_SPAWN_POSITION_X;
+    activeMino.y           = MINO_SPAWN_POSITION_Y;
 
-    if (canBePlaced(currentMinoY, currentMinoX, newMino, currentOrientation)){
-        drawMino(yScreenPos(currentMinoY), xScreenPos(currentMinoX), newMino, currentOrientation, 0);
+    if (canBePlaced(activeMino.y, activeMino.x, *activeMino.mino, activeMino.orientation)){
+        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, false);
         return true;
     } else {
         return false;
     }
 }
 
-ActiveMino selectNext(){
+const Mino* selectNext(){
     if (bagIndex >= 7) {
-        for (uint8_t i = 0; i < 7; i++) bag[i] = (ActiveMino)(i + 1);
+        for (uint8_t i = 0; i < 7; i++) bag[i] = i;
         for (uint8_t i = 6; i > 0; i--){
             uint8_t j = rngNext() % (i + 1);
-            ActiveMino t = bag[i]; 
+            uint8_t t = bag[i]; 
             bag[i] = bag[j]; 
             bag[j] = t;
         }
         bagIndex = 0;
     }
-    return bag[bagIndex++];
+    return &(minos[bag[bagIndex++]]);
 }
 
 uint32_t rngNext(){
@@ -254,57 +223,57 @@ void restartGame(){
 }
 
 bool lowerMino(){
-    if (!canBePlaced(currentMinoY + 1, currentMinoX, minoType(), currentOrientation)){
+    if (!canBePlaced(activeMino.y + 1, activeMino.x, *activeMino.mino, activeMino.orientation)){
         return false;
     } else {
-        drawMino(yScreenPos(currentMinoY), xScreenPos(currentMinoX), minoType(), currentOrientation, true);
-        currentMinoY++;
-        drawMino(yScreenPos(currentMinoY), xScreenPos(currentMinoX), minoType(), currentOrientation, false);
+        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, true);
+        activeMino.y++;
+        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, false);
         return true;
     }
 }
 
 void setMino(){
-    Mino mino = minoType();
     uint16_t toDraw;
-    switch (currentOrientation) {
+    switch (activeMino.orientation) {
         case NORTH:
-            toDraw = mino.rotationNorth;
+            toDraw = activeMino.mino->rotationNorth;
             break;
         case EAST:
-            toDraw = mino.rotationEast;
+            toDraw = activeMino.mino->rotationEast;
             break;
         case SOUTH:
-            toDraw = mino.rotationSouth;
+            toDraw = activeMino.mino->rotationSouth;
             break;
         case WEST:
-            toDraw = mino.rotationWest;
+            toDraw = activeMino.mino->rotationWest;
             break;
     }
 
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
             if (toDraw >> (15 - (j * 4 + i)) & 1) {
-                gameBoard[j + currentMinoY][i + currentMinoX] = mino.color;
+                gameBoard[j + activeMino.y][i + activeMino.x] = activeMino.mino->color;
             }
         }
     }
-    currentMino = NONE;
+    activeMino.mino = NULL;
 }
 
 void moveMino(int8_t direction){
-    if (canBePlaced(currentMinoY, currentMinoX + direction, minoType(), currentOrientation)) {
-        drawMino(yScreenPos(currentMinoY), xScreenPos(currentMinoX), minoType(), currentOrientation, true);
-        currentMinoX += direction;
-        drawMino(yScreenPos(currentMinoY), xScreenPos(currentMinoX), minoType(), currentOrientation, false);
+    if (canBePlaced(activeMino.y, activeMino.x + direction, *activeMino.mino, activeMino.orientation)) {
+        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, true);
+        activeMino.x += direction;
+        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, false);
     }
 }
 
 void rotateMino(void){
-    if (canBePlaced(currentMinoY, currentMinoX, minoType(), currentOrientation + 1)){
-        drawMino(yScreenPos(currentMinoY), xScreenPos(currentMinoX), minoType(), currentOrientation, true);
-        currentOrientation = (currentOrientation + 1) % 4;
-        drawMino(yScreenPos(currentMinoY), xScreenPos(currentMinoX), minoType(), currentOrientation, false);
+    Orientation next = (Orientation)((activeMino.orientation + 1) % 4);
+    if (canBePlaced(activeMino.y, activeMino.x, *activeMino.mino, activeMino.orientation + 1)){
+        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, true);
+        activeMino.orientation = next;
+        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, false);
     }
 }
 
@@ -314,17 +283,17 @@ void clearRows(){
     uint8_t toClear[4];
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < SCREEN_WIDTH; j++){
-            if (gameBoard[i + currentMinoY][BORDER + j] == 0) {
+            if (gameBoard[i + activeMino.y][BORDER + j] == 0) {
                 full = false;
                 break;
             }
         }
         if (full == true){
-            toClear[clearCount] = i + currentMinoY;
+            toClear[clearCount] = i + activeMino.y;
             clearCount++;
             // TODO: If this is above the screen this will break. FIX!
             for (int j = 0; j < SCREEN_WIDTH; j++) {
-                writePixel(yScreenPos(i + currentMinoY), j, WHITE);
+                writePixel(yScreenPos(i + activeMino.y), j, WHITE);
             }
         } else full = true;
     }

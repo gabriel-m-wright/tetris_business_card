@@ -22,17 +22,6 @@
 
 #define SEED 1
 
-typedef enum ActiveMino{
-    NONE,
-    I_BLOCK,
-    S_BLOCK,
-    Z_BLOCK,
-    O_BLOCK,
-    T_BLOCK,
-    L_BLOCK,
-    J_BLOCK
-} ActiveMino;
-
 typedef enum Orientation{
     NORTH,
     EAST,
@@ -56,6 +45,13 @@ typedef struct Mino{
     uint16_t rotationSouth;
     uint16_t rotationWest;
 } Mino;
+
+typedef struct ActiveMino{
+    const Mino* mino;
+    Orientation orientation;
+    uint8_t x;
+    uint8_t y;
+} ActiveMino;
 
 extern const Mino i_block;
 extern const Mino s_block;
@@ -87,7 +83,7 @@ void clearRows(void);
 void drawMino(uint8_t y, uint8_t x, Mino mino, Orientation orientation, bool clear);
 
 // Selects the next available mino
-ActiveMino selectNext(void);
+const Mino* selectNext(void);
 
 // Selects a random number
 uint32_t rngNext(void);
@@ -106,9 +102,6 @@ void restartGame(void);
 
 // Attempts to lower the mino by one. If it can't, it returns FALSE and does nothing else.
 bool lowerMino(void);
-
-// Gets the current type of mino
-Mino minoType(void);
 
 // Moves the mino LEFT or RIGHT
 void moveMino(int8_t);

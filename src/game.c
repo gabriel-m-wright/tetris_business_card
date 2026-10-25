@@ -4,7 +4,7 @@
 #include "isr.h"
 
 // There will be a 2 unit buffer around every playable edge of the board.
-static Color gameBoard[BOARD_HEIGHT][SCREEN_WIDTH + 4];
+static uint8_t gameBoard[BOARD_HEIGHT][SCREEN_WIDTH + 4];
 static ActiveMino currentMino = NONE;
 static Orientation currentOrientation;
 static uint8_t currentMinoX = MINO_SPAWN_POSITION_X;
@@ -19,7 +19,7 @@ static uint8_t bagIndex = 7;
 static uint32_t rngState = SEED;
 
 const Mino i_block = {
-    .color = cyan,
+    .color = CYAN,
     .rotationNorth = {
         {0,0,0,0},
         {1,1,1,1},
@@ -47,7 +47,7 @@ const Mino i_block = {
 };
 
 const Mino s_block = {
-    .color = green,
+    .color = GREEN,
     .rotationNorth = {
         {0,0,1,1},
         {0,1,1,0},
@@ -75,7 +75,7 @@ const Mino s_block = {
 };
 
 const Mino z_block = {
-    .color = red,
+    .color = RED,
     .rotationNorth = {
         {0,1,1,0},
         {0,0,1,1},
@@ -103,7 +103,7 @@ const Mino z_block = {
 };
 
 const Mino o_block = {
-    .color = yellow,
+    .color = YELLOW,
     .rotationNorth = {
         {0,1,1,0},
         {0,1,1,0},
@@ -131,7 +131,7 @@ const Mino o_block = {
 };
 
 const Mino t_block = {
-    .color = purple,
+    .color = PURPLE,
     .rotationNorth = {
         {0,0,1,0},
         {0,1,1,1},
@@ -159,7 +159,7 @@ const Mino t_block = {
 };
 
 const Mino l_block = {
-    .color = orange,
+    .color = ORANGE,
     .rotationNorth = {
         {0,0,0,1},
         {0,1,1,1},
@@ -187,7 +187,7 @@ const Mino l_block = {
 };
 
 const Mino j_block = {
-    .color = blue,
+    .color = BLUE,
     .rotationNorth = {
         {0,1,0,0},
         {0,1,1,1},
@@ -244,8 +244,8 @@ void drawMino(uint8_t y, uint8_t x, Mino mino, Orientation orientation, bool cle
             toDraw = mino.rotationWest;
             break;
     }
-    Color color;
-    if (clear) color = black;
+    uint8_t color;
+    if (clear) color = BLACK;
     else color = mino.color;
 
     for (int i = 0; i < 4; i++){
@@ -374,7 +374,7 @@ bool canBePlaced(uint8_t y, uint8_t x, Mino mino, Orientation orientation){
 void restartGame(){
     for (int j = SCREEN_HEIGHT - 1; j >= 0; j--){
         for (int i = 0; i < SCREEN_WIDTH; i++){
-            writePixel(j, i, white);
+            writePixel(j, i, WHITE);
             delay_cycles(400000);
         }
     }
@@ -386,7 +386,7 @@ void restartGame(){
     }
     for (int j = SCREEN_HEIGHT - 1; j >= 0; j--){
         for (int i = 0; i < SCREEN_WIDTH; i++){
-            writePixel(j, i, black);
+            writePixel(j, i, BLACK);
             delay_cycles(400000);
         }
     }
@@ -464,7 +464,7 @@ void clearRows(){
             clearCount++;
             // TODO: If this is above the screen this will break. FIX!
             for (int j = 0; j < SCREEN_WIDTH; j++) {
-                writePixel(yScreenPos(i + currentMinoY), j, white);
+                writePixel(yScreenPos(i + currentMinoY), j, WHITE);
             }
         } else full = true;
     }

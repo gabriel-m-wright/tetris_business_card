@@ -74,13 +74,13 @@ void IS31FL3741_init(void){
 }
 
 // Writes with a color in 0xRRGGBB format.
-bool writePixel(uint8_t y, uint8_t x, Color color){
+bool writePixel(uint8_t y, uint8_t x, uint8_t color){
     uint8_t txBuffer[4];
     txBuffer[0] = ADDRESS_TABLE[y][x] * 3;
     // Fill the buffer with each bit
-    uint8_t R = color & red;
-    uint8_t G = (color & green) << 3;
-    uint8_t B = (color & blue) << 6;
+    uint8_t R = color & RED;
+    uint8_t G = (color & GREEN) << 3;
+    uint8_t B = (color & BLUE) << 6;
 
     if (y % 2 == 0 && y >= 2){
         // Pixel is BGR

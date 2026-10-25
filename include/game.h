@@ -41,7 +41,7 @@ typedef enum Orientation{
 } Orientation;
 
 typedef struct Mino{
-    Color color;
+    uint8_t color;
     bool rotationNorth[4][4];
     bool rotationEast[4][4];
     bool rotationSouth[4][4];

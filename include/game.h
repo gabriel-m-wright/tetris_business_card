@@ -17,8 +17,9 @@
 #define BASE_TICK_TIME_MS 500
 
 #define MULTIPLIER_SPEED_UP 6
-#define MULTIPLIER_LEVEL    1.1
+#define MULTIPLIER_LEVEL    12
 #define LEVEL_UP            6
+#define SOFT_DROP_MS 80
 
 #define SEED 1
 
@@ -58,6 +59,9 @@ extern const Mino t_block;
 extern const Mino l_block;
 extern const Mino j_block;
 
+const extern uint16_t speedCurve[10];
+extern uint8_t currentSpeed;
+
 // Performs all actions needed each game tick.
 void gameTick(void);
 
@@ -77,7 +81,7 @@ void setMino(void);
 void clearRows(void);
 
 // If clear is set, erase the mino instead.
-void drawMino(uint8_t y, uint8_t x, Mino mino, Orientation orientation, bool clear);
+void drawMino(bool clear);
 
 // Selects the next available mino
 const Mino* selectNext(void);

@@ -6,6 +6,8 @@
 
 volatile uint32_t msPassed = 0;
 volatile bool gravityTick = false;
+uint16_t gravityPassed = 0;
+volatile uint16_t gravityIntervalMs = 500;
 
 volatile bool moveLeft = false;
 volatile bool moveRight = false;
@@ -20,10 +22,6 @@ static volatile uint32_t upLockedMs;
 static volatile bool     downLocked;
 static volatile uint32_t downLockedMs;
 
-volatile uint32_t lineCount = 0; // Lines cleared.
-volatile uint8_t  speedUp   = 1; // Used only for holding DOWN
-volatile uint32_t tickSpeed = 1;
-
 // Helper function for the timer. If a pin has been HIGH for longer than DEBOUNCE_MS it will arm itself.
 static bool rearmPin(uint32_t pin, volatile bool *locked, volatile uint32_t *lockMs);
 
@@ -31,13 +29,16 @@ static bool rearmPin(uint32_t pin, volatile bool *locked, volatile uint32_t *loc
 void TIMER_0_INST_IRQHandler(void){
     if (DL_TimerA_getPendingInterrupt(TIMER_0_INST) == DL_TIMER_IIDX_ZERO){
         msPassed++;
-        if (msPassed % (BASE_TICK_TIME_MS / (tickSpeed * speedUp)) == 0) gravityTick = true;
+        if (++gravityPassed >= gravityIntervalMs){
+            gravityPassed = 0;
+            gravityTick = true;
+        }
     }
     rearmPin(GPIO_GRP_0_PIN_LEFT_PIN, &leftLocked, &leftLockedMs);
     rearmPin(GPIO_GRP_0_PIN_RIGHT_PIN, &rightLocked, &rightLockedMs);
     rearmPin(GPIO_GRP_0_PIN_UP_PIN, &upLocked, &upLockedMs);
     if (rearmPin(GPIO_GRP_0_PIN_DOWN_PIN, &downLocked, &downLockedMs)){
-        speedUp = 1;
+        gravityIntervalMs = speedCurve[currentSpeed];
     }
 }
 
@@ -63,7 +64,7 @@ void GPIOA_IRQHandler(void){
             upLocked = true;
             break;
         case GPIO_GRP_0_PIN_DOWN_IIDX:
-            speedUp = MULTIPLIER_SPEED_UP;
+            gravityIntervalMs = SOFT_DROP_MS;
             DL_GPIO_disableInterrupt(GPIOA, GPIO_GRP_0_PIN_DOWN_PIN);
             downLockedMs = msPassed;
             downLocked = true;

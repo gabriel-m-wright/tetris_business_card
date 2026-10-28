@@ -6,4 +6,6 @@ extern volatile bool moveRight;
 extern volatile bool rotate;
 
 extern volatile uint32_t tickSpeed; // For overall speed up
-extern volatile uint8_t  speedUp; // For holding DOWN
+extern volatile bool  speedUp; // For holding DOWN
+
+extern volatile uint16_t gravityIntervalMs;

@@ -4,6 +4,11 @@
 #include "ti_msp_dl_config.h"
 #include "isr.h"
 
+const uint16_t speedCurve[] = {500,454,375,282,192,119,67,34,16,6};
+uint8_t currentSpeed = 0;
+
+#define SPEED_LEVELS (sizeof(speedCurve) / sizeof(speedCurve[0]))
+
 // There will be a 2 unit buffer around every playable edge of the board.
 static uint8_t gameBoard[BOARD_HEIGHT][SCREEN_WIDTH + 4];
 
@@ -66,16 +71,16 @@ void gameTick(void){
 }
 
 // TODO: Potential bug when mino off screen. Only draw parts of mino on screen.
-void drawMino(uint8_t y, uint8_t x, Mino mino, Orientation orientation, bool clear){
-    uint16_t toDraw = activeMino.mino->shape[orientation];
+void drawMino(bool clear){
+    uint16_t toDraw = activeMino.mino->shape[activeMino.orientation];
     uint8_t color;
     if (clear) color = BLACK;
-    else color = mino.color;
+    else color = activeMino.mino->color;
 
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
             if (toDraw >> (15 - (j * 4 + i)) & 1) {
-                writePixel(y + j, x + i, color);
+                writePixel(yScreenPos(activeMino.y) + j, xScreenPos(activeMino.x) + i, color);
             }
         }
     }
@@ -89,7 +94,7 @@ bool createMino(){
     activeMino.y           = MINO_SPAWN_POSITION_Y;
 
     if (canBePlaced(activeMino.y, activeMino.x, *activeMino.mino, activeMino.orientation)){
-        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, false);
+        drawMino(false);
         return true;
     } else {
         return false;
@@ -100,7 +105,7 @@ const Mino* selectNext(){
     if (bagIndex >= 7) {
         for (uint8_t i = 0; i < 7; i++) bag[i] = i;
         for (uint8_t i = 6; i > 0; i--){
-            uint8_t j = rngNext() % (i + 1);
+            uint8_t j = ((rngNext() >> 16) * (i + 1)) >> 16;
             uint8_t t = bag[i]; 
             bag[i] = bag[j]; 
             bag[j] = t;
@@ -119,7 +124,7 @@ uint32_t rngNext(){
 }
 
 uint8_t xScreenPos(uint8_t x){
-    return x - (BOARD_WIDTH - SCREEN_WIDTH)/2;
+    return x - BORDER;
 }
 
 uint8_t yScreenPos(uint8_t y){
@@ -170,16 +175,17 @@ void restartGame(){
             delay_cycles(400000);
         }
     }
-    tickSpeed = 1;
+    currentSpeed = 0;
+    gravityIntervalMs = speedCurve[currentSpeed];
 }
 
 bool lowerMino(){
     if (!canBePlaced(activeMino.y + 1, activeMino.x, *activeMino.mino, activeMino.orientation)){
         return false;
     } else {
-        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, true);
+        drawMino(true);
         activeMino.y++;
-        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, false);
+        drawMino(false);
         return true;
     }
 }
@@ -198,18 +204,18 @@ void setMino(){
 
 void moveMino(int8_t direction){
     if (canBePlaced(activeMino.y, activeMino.x + direction, *activeMino.mino, activeMino.orientation)) {
-        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, true);
+        drawMino(true);
         activeMino.x += direction;
-        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, false);
+        drawMino(false);
     }
 }
 
 void rotateMino(void){
     Orientation next = (Orientation)((activeMino.orientation + 1) % 4);
     if (canBePlaced(activeMino.y, activeMino.x, *activeMino.mino, activeMino.orientation + 1)){
-        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, true);
+        drawMino(true);
         activeMino.orientation = next;
-        drawMino(yScreenPos(activeMino.y), xScreenPos(activeMino.x), *activeMino.mino, activeMino.orientation, false);
+        drawMino(false);
     }
 }
 
@@ -250,7 +256,12 @@ void clearRows(){
         }
         lineCount += clearCount;
         reWriteScreen();
-        tickSpeed = (uint32_t)((lineCount / LEVEL_UP + 1) * MULTIPLIER_LEVEL);
+        if (lineCount >= LEVEL_UP) {
+            lineCount = 0;
+            if (currentSpeed < SPEED_LEVELS - 1)
+                currentSpeed++;
+            gravityIntervalMs = speedCurve[currentSpeed];
+        }
     }
 }
 

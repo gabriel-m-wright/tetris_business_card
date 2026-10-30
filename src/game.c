@@ -27,7 +27,7 @@ static uint8_t bagIndex = BAG_SIZE;
 
 static uint32_t rngState = SEED;
 
-const Mino minos[BAG_SIZE] = {
+static const Mino minos[BAG_SIZE] = {
     {
         .color = CYAN,
         .shape = {0b0000111100000000,0b0010001000100010,0b0000000011110000,0b0100010001000100}
@@ -58,6 +58,8 @@ const Mino minos[BAG_SIZE] = {
     }
 };
 
+static bool rowFull(uint8_t y); // Returns TRUE if the row at y is full, and FALSE if not.
+
 void gameTick(void){
     if (activeMino.mino == NULL){
         if (!createMino()) restartGame();
@@ -72,7 +74,6 @@ void gameTick(void){
     }
 }
 
-// TODO: Potential bug when mino off screen. Only draw parts of mino on screen.
 void drawMino(bool clear){
     if (!activeMino.mino) return;
 
@@ -81,7 +82,7 @@ void drawMino(bool clear){
 
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
-            if (MINO_CELL(toDraw, j, i) != BLACK) {
+            if (inBounds(activeMino.y + j, activeMino.x + i) && MINO_CELL(toDraw, j, i) != BLACK) {
                 writePixel(yScreenPos(activeMino.y) + j, xScreenPos(activeMino.x) + i, color);
             }
         }
@@ -232,24 +233,18 @@ void rotateMino(void){
 }
 
 void clearRows(){
-    bool full = true;
     uint8_t clearCount = 0;
     uint8_t toClear[4];
-    for (int i = 0; i < 4; i++){
-        for (int j = 0; j < SCREEN_WIDTH; j++){
-            if (gameBoard[i + activeMino.y][BORDER + j] == 0) {
-                full = false;
-                break;
+    for (int i = activeMino.y; i < activeMino.y + 4; i++){
+        if (rowFull(i)){
+            toClear[clearCount] = i;
+            clearCount++;
+            if (inBounds(i, 0)){
+                for (int j = 0; j < SCREEN_WIDTH; j++) {
+                    writePixel(yScreenPos(i + activeMino.y), j, WHITE);
+                }
             }
         }
-        if (full == true){
-            toClear[clearCount] = i + activeMino.y;
-            clearCount++;
-            // TODO: If this is above the screen this will break. FIX!
-            for (int j = 0; j < SCREEN_WIDTH; j++) {
-                writePixel(yScreenPos(i + activeMino.y), j, WHITE);
-            }
-        } else full = true;
     }
     if (clearCount) {
         uint32_t start = msPassed;
@@ -275,6 +270,15 @@ void clearRows(){
             gravityIntervalMs = speedCurve[currentSpeed];
         }
     }
+}
+
+static bool rowFull(uint8_t y){
+    for (int i = 0; i < SCREEN_WIDTH; i++){
+        if (gameBoard[y][BORDER + i] == BLACK){
+            return false;
+        }
+    }
+    return true;
 }
 
 void reWriteScreen(){

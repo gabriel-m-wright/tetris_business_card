@@ -4,12 +4,57 @@
 #include "ti_msp_dl_config.h"
 #include "isr.h"
 
-//----------[Preprocessor Definitions]----------//
-#define SPEED_LEVELS (sizeof(speedCurve) / sizeof(speedCurve[0]))
+//----------[Definitions]----------//
+#define LEVEL_UP 6 // Lines that need to be cleared to speed up.
+#define BAG_SIZE 7 // Size of the randomized bag.
+
+// Initial spawn position of each mino.
+#define MINO_SPAWN_POSITION_X  2 + BORDER
+#define MINO_SPAWN_POSITION_Y -3 + BOARD_HEIGHT - SCREEN_HEIGHT - BORDER 
+
+#define BORDER       2  // Extra board space around the edges of the screen, except the top.
+#define BOARD_HEIGHT 20
+#define BOARD_WIDTH  SCREEN_WIDTH + BORDER * 2
+
+// TODO: Set up a randomized seed.
+#define SEED 1
+
+#define SPEED_LEVELS (sizeof(speedCurve) / sizeof(speedCurve[0]))     // Number of levels of speed.
+
+#define MINO_CELL(o,y,x) (((o) >> (15 - ((y) * 4 + (x)))) & 1)        // Converts an orientation and position to a 0 or 1.
+#define Y_SCREEN_POS(y) (y - (BOARD_HEIGHT - SCREEN_HEIGHT - BORDER)) // Converts a board y location to a screen y location.
+#define X_SCREEN_POS(x) (x - BORDER)                                  // Converts a board x location to a screen x location.
+
+// Each orientation corresponds to an index of a Mino's shape array.
+typedef enum Orientation{
+    NORTH = 0,
+    EAST  = 1,
+    SOUTH = 2,
+    WEST  = 3
+} Orientation;
+
+// shape[4] stores the four possible orientations of a mino.
+typedef struct Mino{
+    uint8_t color;
+    uint16_t shape[4];
+} Mino;
 
 //----------[Game Data]----------//
-const uint16_t speedCurve[] = {500,454,375,282,192,119,67,34,16,6};
+// Available gravityTick periods, calculated externally with the formula s = 500 / (1.1 ^ currentSpeed)
+const uint16_t speedCurve[] = {500,454,375,282,192,119,67,34,16,6}; 
 
+// Currently selected index of speedCurve[].
+uint8_t currentSpeed = 0;
+
+
+/*
+Each mino is encoded as a 4x4 square with a 1 corresponding to the presence of a block.
+.X..
+.XX.
+.X..
+....
+This mino would become 0b01100011001000000.
+*/
 static const Mino minos[BAG_SIZE] = {
     {
         .color = CYAN,
@@ -41,27 +86,24 @@ static const Mino minos[BAG_SIZE] = {
     }
 };
 
-static uint8_t gameBoard[BOARD_HEIGHT][BOARD_WIDTH];
+static uint8_t gameBoard[BOARD_HEIGHT][BOARD_WIDTH]; // Stores the color data of every tile on the board.
+static uint8_t bag[BAG_SIZE];                        // Stores the indices of the BAG_SIZE upcoming pieces.
 
-uint8_t currentSpeed = 0;
+static uint32_t lineCount = 0;                       // Number of lines cleared in the current level.
+static uint8_t  bagIndex  = BAG_SIZE;                // Initializes the current bag index to force an initial shuffle.
+static uint32_t rngState  = SEED;                    // Initializes the RNG to the initial seed.
 
-
-// There will be a 2 unit buffer around every playable edge of the board.
-
-static ActiveMino activeMino = {
+// Stores the state of the currently selected mino.
+static struct {
+    const Mino *mino;
+    Orientation orientation;
+    uint8_t x, y;
+} activeMino = { 
     .mino = NULL,
     .orientation = NORTH,
     .x = MINO_SPAWN_POSITION_X,
     .y = MINO_SPAWN_POSITION_Y,
 };
-
-static uint32_t lineCount = 0;
-
-// Stores the seven upcoming pieces as indices in minos[].
-static uint8_t bag[BAG_SIZE];
-static uint8_t bagIndex = BAG_SIZE;
-
-static uint32_t rngState = SEED;
 
 //----------[Static Function Declaration]----------//
 
@@ -69,8 +111,6 @@ static uint32_t rngState = SEED;
 static void    drawMino(bool clear);  // If clear is set, erase the mino instead.
 static void    clearRows(void);       // Checks if any rows are full and need to be cleared. If so, clear them.
 static void    reWriteScreen(void);   // Refreshes the entire screen
-static uint8_t yScreenPos(uint8_t y); // Converts a board y location to a screen y location.
-static uint8_t xScreenPos(uint8_t x); // Converts a board x location to a screen x location.
 
 // Testing
 static bool canBePlaced(uint8_t y, uint8_t x, Orientation orientation); // Checks if the mino can be placed at the given location.
@@ -130,7 +170,7 @@ static void drawMino(bool clear){
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
             if (onScreen(activeMino.y + j, activeMino.x + i) && MINO_CELL(toDraw, j, i) != BLACK) {
-                writePixel(yScreenPos(activeMino.y) + j, xScreenPos(activeMino.x) + i, color);
+                writePixel(Y_SCREEN_POS(activeMino.y) + j, X_SCREEN_POS(activeMino.x) + i, color);
             }
         }
     }
@@ -145,7 +185,7 @@ static void clearRows(){
             clearCount++;
             if (onScreen(i, BORDER)){
                 for (int j = 0; j < SCREEN_WIDTH; j++) {
-                    writePixel(yScreenPos(i), j, WHITE);
+                    writePixel(Y_SCREEN_POS(i), j, WHITE);
                 }
             }
         }
@@ -179,17 +219,9 @@ static void clearRows(){
 static void reWriteScreen(){
     for (int i = 0 + BOARD_HEIGHT - BORDER - SCREEN_HEIGHT; i < BOARD_HEIGHT - BORDER; i++){
         for (int j = 0 + BORDER; j < SCREEN_WIDTH + BORDER; j++){
-            writePixel(yScreenPos(i), xScreenPos(j), gameBoard[i][j]);
+            writePixel(Y_SCREEN_POS(i), X_SCREEN_POS(j), gameBoard[i][j]);
         }
     }
-}
-
-static uint8_t yScreenPos(uint8_t y){
-    return y - (BOARD_HEIGHT - SCREEN_HEIGHT - BORDER);
-}
-
-static uint8_t xScreenPos(uint8_t x){
-    return x - BORDER;
 }
 
 static bool canBePlaced(uint8_t y, uint8_t x, Orientation orientation){

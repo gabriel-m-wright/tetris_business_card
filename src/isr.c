@@ -2,6 +2,8 @@
 #include "isr.h"
 #include "game.h"
 
+#define SOFT_DROP_MS 80
+
 volatile uint32_t msPassed = 0;
 volatile bool gravityTick = false;
 static   uint16_t gravityPassed = 0;

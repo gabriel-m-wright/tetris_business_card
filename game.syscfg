@@ -2,7 +2,7 @@
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
  * @cliArgs --device "MSPM0C110X" --part "Default" --package "SOT-16(DYY)" --product "mspm0_sdk@2.11.00.07"
- * @v2CliArgs --device "MSPM0C1104" --package "SOT-16(DYY)" --product "mspm0_sdk@2.11.00.07"
+ * @v2CliArgs --device "MSPM0C1103" --package "SOT-16(DYY)" --product "mspm0_sdk@2.11.00.07"
  * @versions {"tool":"1.26.2+4477"}
  */
 

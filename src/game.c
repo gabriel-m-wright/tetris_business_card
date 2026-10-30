@@ -10,7 +10,7 @@ uint8_t currentSpeed = 0;
 #define SPEED_LEVELS (sizeof(speedCurve) / sizeof(speedCurve[0]))
 
 // There will be a 2 unit buffer around every playable edge of the board.
-static uint8_t gameBoard[BOARD_HEIGHT][SCREEN_WIDTH + 4];
+static uint8_t gameBoard[BOARD_HEIGHT][BOARD_WIDTH];
 
 static ActiveMino activeMino = {
     .mino = NULL,
@@ -22,12 +22,12 @@ static ActiveMino activeMino = {
 static uint32_t lineCount = 0;
 
 // Stores the seven upcoming pieces as indices in minos[].
-static uint8_t bag[7];
-static uint8_t bagIndex = 7;
+static uint8_t bag[BAG_SIZE];
+static uint8_t bagIndex = BAG_SIZE;
 
 static uint32_t rngState = SEED;
 
-const Mino minos[7] = {
+const Mino minos[BAG_SIZE] = {
     {
         .color = CYAN,
         .shape = {0b0000111100000000,0b0010001000100010,0b0000000011110000,0b0100010001000100}
@@ -57,6 +57,7 @@ const Mino minos[7] = {
         .shape = {0b0100011100000000,0b0011001000100000,0b0000011100010000,0b0010001001100000}
     }
 };
+
 void gameTick(void){
     if (activeMino.mino == NULL){
         if (!createMino()) restartGame();
@@ -66,34 +67,35 @@ void gameTick(void){
     if (!lowerMino()) {
         setMino();
         clearRows();
+        if (!createMino()) restartGame();
         return;
     }
 }
 
 // TODO: Potential bug when mino off screen. Only draw parts of mino on screen.
 void drawMino(bool clear){
+    if (!activeMino.mino) return;
+
     uint16_t toDraw = activeMino.mino->shape[activeMino.orientation];
-    uint8_t color;
-    if (clear) color = BLACK;
-    else color = activeMino.mino->color;
+    uint8_t color = clear ? BLACK : activeMino.mino->color;
 
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
-            if (toDraw >> (15 - (j * 4 + i)) & 1) {
+            if (MINO_CELL(toDraw, j, i) != BLACK) {
                 writePixel(yScreenPos(activeMino.y) + j, xScreenPos(activeMino.x) + i, color);
             }
         }
     }
 }
 
-
 bool createMino(){
+    softDrop               = false;
     activeMino.mino        = selectNext();
     activeMino.orientation = NORTH;
     activeMino.x           = MINO_SPAWN_POSITION_X;
     activeMino.y           = MINO_SPAWN_POSITION_Y;
 
-    if (canBePlaced(activeMino.y, activeMino.x, *activeMino.mino, activeMino.orientation)){
+    if (canBePlaced(activeMino.y, activeMino.x, activeMino.orientation)){
         drawMino(false);
         return true;
     } else {
@@ -102,8 +104,8 @@ bool createMino(){
 }
 
 const Mino* selectNext(){
-    if (bagIndex >= 7) {
-        for (uint8_t i = 0; i < 7; i++) bag[i] = i;
+    if (bagIndex >= BAG_SIZE) {
+        for (uint8_t i = 0; i < BAG_SIZE; i++) bag[i] = i;
         for (uint8_t i = 6; i > 0; i--){
             uint8_t j = ((rngNext() >> 16) * (i + 1)) >> 16;
             uint8_t t = bag[i]; 
@@ -131,14 +133,14 @@ uint8_t yScreenPos(uint8_t y){
     return y - (BOARD_HEIGHT - SCREEN_HEIGHT - BORDER);
 }
 
-bool inBounds(uint8_t x, uint8_t y){
-    if (x >= BORDER & x < BORDER + SCREEN_WIDTH & y < BOARD_HEIGHT - BORDER) {
+bool inBounds(uint8_t y, uint8_t x){
+    if (x >= BORDER && x < BORDER + SCREEN_WIDTH && y < BOARD_HEIGHT - BORDER) {
         return true;
     } else {
         return false;
     }
 }
-bool onScreen(uint8_t x, uint8_t y){
+bool onScreen(uint8_t y, uint8_t x){
     if (x >= BORDER & x < BORDER + SCREEN_WIDTH & y < BOARD_HEIGHT - BORDER & y > BOARD_HEIGHT - SCREEN_HEIGHT - BORDER){
         return true;
     } else {
@@ -146,11 +148,11 @@ bool onScreen(uint8_t x, uint8_t y){
     }
 }
 
-bool canBePlaced(uint8_t y, uint8_t x, Mino mino, Orientation orientation){
+bool canBePlaced(uint8_t y, uint8_t x, Orientation orientation){
     uint16_t toDraw = activeMino.mino->shape[orientation];
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
-            if ((toDraw >> (15 - (j * 4 + i)) & 1) & (!inBounds(x + i, y + j) | (gameBoard[y+j][x+i] != 0))) return false;
+            if (MINO_CELL(toDraw, j, i) && (!inBounds(y + j, x + i) || (gameBoard[y+j][x+i] != 0))) return false;
         }
     }
     return true;
@@ -175,12 +177,20 @@ void restartGame(){
             delay_cycles(400000);
         }
     }
-    currentSpeed = 0;
+    
+    currentSpeed      = 0;
     gravityIntervalMs = speedCurve[currentSpeed];
+    lineCount         = 0;
+    activeMino.mino   = NULL;
+    moveLeft          = false;
+    moveRight         = false;
+    rotate            = false;
+    gravityTick       = false;
+    softDrop          = false;
 }
 
 bool lowerMino(){
-    if (!canBePlaced(activeMino.y + 1, activeMino.x, *activeMino.mino, activeMino.orientation)){
+    if (!canBePlaced(activeMino.y + 1, activeMino.x, activeMino.orientation)){
         return false;
     } else {
         drawMino(true);
@@ -194,7 +204,7 @@ void setMino(){
     uint16_t toDraw = activeMino.mino->shape[activeMino.orientation];
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
-            if (toDraw >> (15 - (j * 4 + i)) & 1) {
+            if (MINO_CELL(toDraw, j, i) != BLACK) {
                 gameBoard[j + activeMino.y][i + activeMino.x] = activeMino.mino->color;
             }
         }
@@ -203,7 +213,8 @@ void setMino(){
 }
 
 void moveMino(int8_t direction){
-    if (canBePlaced(activeMino.y, activeMino.x + direction, *activeMino.mino, activeMino.orientation)) {
+    if (!activeMino.mino) return;
+    if (canBePlaced(activeMino.y, activeMino.x + direction, activeMino.orientation)) {
         drawMino(true);
         activeMino.x += direction;
         drawMino(false);
@@ -211,8 +222,9 @@ void moveMino(int8_t direction){
 }
 
 void rotateMino(void){
-    Orientation next = (Orientation)((activeMino.orientation + 1) % 4);
-    if (canBePlaced(activeMino.y, activeMino.x, *activeMino.mino, activeMino.orientation + 1)){
+    if (!activeMino.mino) return;
+    Orientation next = (Orientation)((activeMino.orientation + 1) & 3);
+    if (canBePlaced(activeMino.y, activeMino.x, next)){
         drawMino(true);
         activeMino.orientation = next;
         drawMino(false);
@@ -257,7 +269,7 @@ void clearRows(){
         lineCount += clearCount;
         reWriteScreen();
         if (lineCount >= LEVEL_UP) {
-            lineCount = 0;
+            lineCount -= LEVEL_UP;
             if (currentSpeed < SPEED_LEVELS - 1)
                 currentSpeed++;
             gravityIntervalMs = speedCurve[currentSpeed];

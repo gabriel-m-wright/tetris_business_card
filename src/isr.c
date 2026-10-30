@@ -2,16 +2,15 @@
 #include "isr.h"
 #include "game.h"
 
-#define DEBOUNCE_MS 10
-
 volatile uint32_t msPassed = 0;
 volatile bool gravityTick = false;
-uint16_t gravityPassed = 0;
+static   uint16_t gravityPassed = 0;
 volatile uint16_t gravityIntervalMs = 500;
 
 volatile bool moveLeft = false;
 volatile bool moveRight = false;
 volatile bool rotate = false;
+volatile bool softDrop = false;
 
 static volatile bool     leftLocked;
 static volatile uint32_t leftLockedMs;
@@ -29,6 +28,7 @@ static bool rearmPin(uint32_t pin, volatile bool *locked, volatile uint32_t *loc
 void TIMER_0_INST_IRQHandler(void){
     if (DL_TimerA_getPendingInterrupt(TIMER_0_INST) == DL_TIMER_IIDX_ZERO){
         msPassed++;
+        gravityIntervalMs = softDrop && SOFT_DROP_MS < speedCurve[currentSpeed] ? SOFT_DROP_MS : speedCurve[currentSpeed];
         if (++gravityPassed >= gravityIntervalMs){
             gravityPassed = 0;
             gravityTick = true;
@@ -38,7 +38,7 @@ void TIMER_0_INST_IRQHandler(void){
     rearmPin(GPIO_GRP_0_PIN_RIGHT_PIN, &rightLocked, &rightLockedMs);
     rearmPin(GPIO_GRP_0_PIN_UP_PIN, &upLocked, &upLockedMs);
     if (rearmPin(GPIO_GRP_0_PIN_DOWN_PIN, &downLocked, &downLockedMs)){
-        gravityIntervalMs = speedCurve[currentSpeed];
+        softDrop = false;
     }
 }
 
@@ -64,7 +64,7 @@ void GPIOA_IRQHandler(void){
             upLocked = true;
             break;
         case GPIO_GRP_0_PIN_DOWN_IIDX:
-            gravityIntervalMs = SOFT_DROP_MS;
+            softDrop = true;
             DL_GPIO_disableInterrupt(GPIOA, GPIO_GRP_0_PIN_DOWN_PIN);
             downLockedMs = msPassed;
             downLocked = true;

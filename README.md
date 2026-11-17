@@ -28,7 +28,5 @@ LED Driver Chip: IS31FL3741A
 ### Footprint
 | Resource | Used | Available |
 | -------- | ---- | --------- |
-| Flash | USEDFLASH | 8KB |
-| SRAM | USEDSRAM | 1KB |
-
-<!-- TODO: Update used SRAM and Flash-->
+| Flash | 4KB | 8KB |
+| SRAM | 377B | 1KB |

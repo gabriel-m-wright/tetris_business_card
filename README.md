@@ -9,11 +9,11 @@ Current prototype.
 At present, the game is functional as a breadboard prototype.
 
 ## Features
-- [x] LED matrix driver controls\
-- [x] Basic game logic\
-- [x] Interrupt-driven gravity tick\
-- [ ] Custom PCB design\
-- [ ] Finalize the game software to place gameplay in-line with modern Tetris standards.
+- [x] LED matrix driver controls
+- [x] Basic game logic
+- [x] Interrupt-driven gravity tick
+- [ ] Custom PCB design
+- [ ] Finalize the game software to place gameplay in-line with modern Tetris standards
 
 ## Hardware
 MCU: TI-MSPM0C1103\

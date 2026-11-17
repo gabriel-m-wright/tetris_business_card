@@ -3,6 +3,7 @@ The goal of this project is to develop a Tetris-like game written in C for the T
 The components to run this game will be placed on a PCB business card, with my information on one side, and the game on the other.
 
 <img width="3072" height="4080" alt="tetris" src="https://github.com/user-attachments/assets/e54155d4-514f-4ae4-a0e3-17f5fe560e86" />
+Current prototype.
 
 ## Status
 At present, the game is functional as a breadboard prototype.
